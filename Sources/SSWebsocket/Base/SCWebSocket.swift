@@ -24,7 +24,7 @@ open class SCWebSocket: NSObject, SSWebSocketDelegate {
     
     open var waitingMessage = [[String: Any]]()
     
-    override init() {
+    public override init() {
         super.init()
         open()
     }
