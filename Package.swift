@@ -10,7 +10,9 @@ let package = Package(name: "SSWebsocket",
                         .library(name: "SSWebsocket", targets: ["SSWebsocket"]),
                       ],
                       dependencies: [
-                        .package(url: "https://github.com/vapor/websocket-kit", from: "2.2.0")
+                        .package(url: "https://gitee.com/ztgtut/websocket-kit.git", from: "2.2.0"),
+                        .package(url: "https://gitee.com/ztgtut/swift-nio.git", from: "2.33.0"),
+                        .package(url: "https://gitee.com/ztgtut/swift-nio-ssl.git", from: "2.16.1"),
                       ],
                       targets: [
                         .target(name: "SSWebsocket", dependencies: [
