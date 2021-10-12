@@ -7,29 +7,29 @@
 
 import Foundation
 
-class SCWebSocket: NSObject, SSWebSocketDelegate {
+open class SCWebSocket: NSObject, SSWebSocketDelegate {
     
     deinit {
         webSocket?.close()
     }
     
-    var urlStr: String {
+    open var urlStr: String {
         fatalError("这个变量需要子类去设定，父类的不可用")
     }
-    var webSocket: SSWebSocketClient?
+    open var webSocket: SSWebSocketClient?
     
-    var isConnected: Bool {
+    open var isConnected: Bool {
         return webSocket?.state == .connected
     }
     
-    var waitingMessage = [[String: Any]]()
+    open var waitingMessage = [[String: Any]]()
     
     override init() {
         super.init()
         open()
     }
     
-    func open() {
+    open func open() {
         if isConnected {
             return
         }
@@ -40,7 +40,7 @@ class SCWebSocket: NSObject, SSWebSocketDelegate {
         }
     }
     
-    func sendMessage(message: [String: Any]) {
+    open func sendMessage(message: [String: Any]) {
         if !isConnected {
             waitingMessage.append(message)
             return
@@ -52,11 +52,11 @@ class SCWebSocket: NSObject, SSWebSocketDelegate {
         }
     }
     
-    func sendPing() {
+    open func sendPing() {
         webSocket?.send("ping")
     }
     
-    func sendWaitingMessage() {
+    open func sendWaitingMessage() {
         if waitingMessage.count > 0 {
             for mess in waitingMessage {
                 sendMessage(message: mess)
@@ -65,42 +65,42 @@ class SCWebSocket: NSObject, SSWebSocketDelegate {
         waitingMessage.removeAll()
     }
     
-    func webSocketDidReceive(message: [String: Any]) {
+    open func webSocketDidReceive(message: [String: Any]) {
         
     }
     
     /// 子类继承的类
-    func webSocketDidReceive(string: String) {
+    open func webSocketDidReceive(string: String) {
         
     }
     
-    func webSocketDidReceive(data: Data) {
+    open func webSocketDidReceive(data: Data) {
         
     }
     
-    func webSocketDidClosedWith(code: Int, reason: String?) {
+    open func webSocketDidClosedWith(code: Int, reason: String?) {
         open()
     }
     
     /// 代理
-    func webSocketDidOpen() {
+    open func webSocketDidOpen() {
         print("webSocketDidOpen")
         sendWaitingMessage()
     }
-    func webSocket(didReceiveMessageWith string: String) {
+    open func webSocket(didReceiveMessageWith string: String) {
         webSocketDidReceive(string: string)
     }
-    func webSocket(didReceiveMessageWith data: Data) {
+    open func webSocket(didReceiveMessageWith data: Data) {
         webSocketDidReceive(data: data)
     }
-    func webSocket(didFailWithError error: Error) {
+    open func webSocket(didFailWithError error: Error) {
         print("didFailWithError：\(error)")
         let desc = "\(error)"
         if desc.contains("connectTimeout") {
             self.open()
         }
     }
-    func webSocket(didCloseWithCode code: Int, reason: String?) {
+    open func webSocket(didCloseWithCode code: Int, reason: String?) {
         webSocketDidClosedWith(code: code, reason: reason)
         print("didCloseWithCode:\(code), reason:\(reason ?? "")")
     }
