@@ -37,6 +37,7 @@ open class SCWebSocket: NSObject, SSWebSocketDelegate {
             webSocket = NIOWebSocket(url)
             webSocket?.delegate = self
             webSocket?.open()
+            print("Websocket开始连接：\(url)")
         }
     }
     
@@ -47,6 +48,7 @@ open class SCWebSocket: NSObject, SSWebSocketDelegate {
         }
         if let data = try? JSONSerialization.data(withJSONObject: message, options: .prettyPrinted) {
             if let str = String(data: data, encoding: .utf8) {
+                print("Websocket发送消息：\(str)")
                 webSocket?.send(str)
             }
         }
