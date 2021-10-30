@@ -48,7 +48,6 @@ open class SCWebSocket: NSObject, SSWebSocketDelegate {
         }
         if let data = try? JSONSerialization.data(withJSONObject: message, options: .prettyPrinted) {
             if let str = String(data: data, encoding: .utf8) {
-                print("Websocket发送消息：\(str)")
                 webSocket?.send(str)
             }
         }
