@@ -20,7 +20,7 @@ open class URLWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSocketClien
     
     open weak var delegate: SSWebSocketDelegate?
     
-    private var session: URLSession!
+    private var session: URLSession?
     private var task: URLSessionWebSocketTask?
     
     open var state = SSWebSocketState.closed
@@ -28,23 +28,17 @@ open class URLWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSocketClien
     required public convenience init(_ url: URL) {
         self.init()
         self.url = url
-        setup()
-    }
-    
-    private func setup() {
-        let config = URLSessionConfiguration.default
-        session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+        session = URLSession(configuration: URLSessionConfiguration.default, delegate: self, delegateQueue: nil)
     }
     
     open func open() {
-        if url == nil  {
+        guard let url = url else {
             fatalError("初始化失败，url都为空");
         }
         
         state = .connecting
         
-//        task = session.webSocketTask(with: url!, protocols: ["RFC6455"])
-        task = session.webSocketTask(with: url!)
+        task = session?.webSocketTask(with: url)
         task?.maximumMessageSize = 4096
         self.receive()
         task?.resume()
@@ -55,6 +49,7 @@ open class URLWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSocketClien
     }
     
     public func close(_ closeCode: Int? = nil, reason: Data? = nil) {
+        state = .closing
         var code = URLSessionWebSocketTask.CloseCode.normalClosure
         if closeCode != nil {
             code = URLSessionWebSocketTask.CloseCode(rawValue: closeCode!)!
@@ -113,11 +108,16 @@ open class URLWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSocketClien
                 case .failure(let error):
                     let err = error as NSError
                     if err.code == 57 {
-                        print("读取数据失败，连接中断了：\(err)")
+                        print("读取数据失败，连接已中断：\(err)")
+                        self?.state = .closed
+                        DispatchQueue.main.async {
+                            self?.delegate?.webSocket(didCloseWithCode: err.code, reason: err.localizedDescription)
+                        }
                         return
                     }
+                    print("读取数据失败，错误:\(err)")
                     DispatchQueue.main.async {
-                        self?.delegate?.webSocket(didFailWithError: error)
+                        self?.delegate?.webSocket(didFailWithError: err)
                     }
             }
             self?.receive()
