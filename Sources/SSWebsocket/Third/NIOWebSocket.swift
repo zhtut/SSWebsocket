@@ -23,7 +23,7 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
     
     open weak var delegate: SSWebSocketDelegate?
     
-    open var state: State = State.closed
+    open var state: SSWebSocketState = SSWebSocketState.closed
     
     var elg = MultiThreadedEventLoopGroup(numberOfThreads: 2)
     var ws: WebSocket?

@@ -11,7 +11,7 @@ import FoundationNetworking
 #endif
 
 
-public enum State {
+public enum SSWebSocketState {
     case connecting
     case connected
     case closing
@@ -32,7 +32,7 @@ public protocol SSWebSocketClient: AnyObject {
     init(_ request: URLRequest)
     
     var delegate: SSWebSocketDelegate? { get set }
-    var state: State { get set }
+    var state: SSWebSocketState { get set }
     
     func open()
     

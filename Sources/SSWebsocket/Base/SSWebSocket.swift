@@ -7,7 +7,7 @@
 
 import Foundation
 
-open class SCWebSocket: NSObject, SSWebSocketDelegate {
+open class SSWebSocket: NSObject, SSWebSocketDelegate {
     
     deinit {
         webSocket?.close()
@@ -34,7 +34,7 @@ open class SCWebSocket: NSObject, SSWebSocketDelegate {
             return
         }
         if let url = URL(string: urlStr) {
-            webSocket = NIOWebSocket(url)
+            webSocket = URLWebSocket(url)
             webSocket?.delegate = self
             webSocket?.open()
             print("Websocket开始连接：\(url)")

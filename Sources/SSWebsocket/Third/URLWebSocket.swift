@@ -24,7 +24,7 @@ open class URLWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSocketClien
     private var session: URLSession!
     private var task: URLSessionWebSocketTask?
     
-    open var state = State.closed
+    open var state = SSWebSocketState.closed
     
     required public convenience init(_ url: URL) {
         self.init()
@@ -39,7 +39,8 @@ open class URLWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSocketClien
     }
     
     private func setup() {
-        session = URLSession(configuration: URLSessionConfiguration.default, delegate: self, delegateQueue: nil)
+        let config = URLSessionConfiguration.default
+        session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
     }
     
     open func open() {
@@ -51,7 +52,8 @@ open class URLWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSocketClien
             fatalError("初始化失败，url和reuest都为空，");
         }
         
-        task = session.webSocketTask(with: request!)
+//        task = session.webSocketTask(with: url!, protocols: ["RFC6455"])
+        task = session.webSocketTask(with: url!)
         task?.maximumMessageSize = 4096
         self.receive()
         task?.resume()
