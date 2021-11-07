@@ -119,6 +119,7 @@ open class URLWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSocketClien
                     DispatchQueue.main.async {
                         self?.delegate?.webSocket(didFailWithError: err)
                     }
+                    return
             }
             self?.receive()
         })
