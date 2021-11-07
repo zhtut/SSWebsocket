@@ -29,7 +29,6 @@ public protocol SSWebSocketDelegate: AnyObject {
 public protocol SSWebSocketClient: AnyObject {
     
     init(_ url: URL)
-    init(_ request: URLRequest)
     
     var delegate: SSWebSocketDelegate? { get set }
     var state: SSWebSocketState { get set }

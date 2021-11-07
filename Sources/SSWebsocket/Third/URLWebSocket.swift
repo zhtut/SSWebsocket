@@ -17,7 +17,6 @@ import Dispatch
 open class URLWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSocketClient {
     
     open var url: URL?
-    open var request: URLRequest?
     
     open weak var delegate: SSWebSocketDelegate?
     
@@ -32,25 +31,17 @@ open class URLWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSocketClien
         setup()
     }
     
-    required public convenience init(_ request: URLRequest) {
-        self.init()
-        self.request = request
-        setup()
-    }
-    
     private func setup() {
         let config = URLSessionConfiguration.default
         session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
     }
     
     open func open() {
+        if url == nil  {
+            fatalError("初始化失败，url都为空");
+        }
+        
         state = .connecting
-        if url != nil && request == nil {
-            request = URLRequest(url: url!)
-        }
-        if (request == nil) {
-            fatalError("初始化失败，url和reuest都为空，");
-        }
         
 //        task = session.webSocketTask(with: url!, protocols: ["RFC6455"])
         task = session.webSocketTask(with: url!)
