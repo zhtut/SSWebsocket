@@ -34,7 +34,7 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
             return
         }
         if let url = URL(string: urlStr) {
-            webSocket = URLWebSocket(url)
+            webSocket = URLSessionWebSocket(url)
             webSocket?.delegate = self
             webSocket?.open()
             print("Websocket开始连接：\(url)")

@@ -14,7 +14,7 @@ import FoundationNetworking
 import Dispatch
 #endif
 
-open class URLWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSocketClient {
+open class URLSessionWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSocketClient {
     
     open var url: URL?
     
