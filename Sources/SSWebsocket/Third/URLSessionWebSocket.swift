@@ -5,13 +5,9 @@
 //  Created by shutut on 2021/9/7.
 //
 
-#if os(iOS) || os(macOS)
 import Foundation
 #if canImport(FoundationNetworking)
 import FoundationNetworking
-#endif
-#if canImport(Dispatch)
-import Dispatch
 #endif
 
 open class URLSessionWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSocketClient {
@@ -151,5 +147,3 @@ open class URLSessionWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSock
         self.delegate?.webSocket(didCloseWithCode: intCode, reason: r)
     }
 }
-
-#endif
