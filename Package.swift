@@ -9,6 +9,19 @@ let package = Package(name: "SSWebsocket",
                       products: [
                         .library(name: "SSWebsocket", targets: ["SSWebsocket"]),
                       ],
+                      dependencies: [
+                        .package(url: "https://gitee.com/ztgtut/websocket-kit.git", from: "2.2.0"),
+                        .package(url: "https://gitee.com/ztgtut/swift-nio.git", from: "2.33.0"),
+                        .package(url: "https://gitee.com/ztgtut/swift-nio-ssl.git", from: "2.16.1"),
+                      ],
                       targets: [
-                        .target(name: "SSWebsocket"),
+                        .target(name: "SSWebsocket", dependencies: [
+                            .product(name: "WebSocketKit", package: "websocket-kit"),
+                            .product(name: "NIO", package: "swift-nio"),
+                            .product(name: "NIOConcurrencyHelpers", package: "swift-nio"),
+                            .product(name: "NIOFoundationCompat", package: "swift-nio"),
+                            .product(name: "NIOHTTP1", package: "swift-nio"),
+                            .product(name: "NIOSSL", package: "swift-nio-ssl"),
+                            .product(name: "NIOWebSocket", package: "swift-nio"),
+                        ]),
                       ])

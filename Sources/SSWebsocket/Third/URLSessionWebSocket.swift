@@ -5,6 +5,8 @@
 //  Created by shutut on 2021/9/7.
 //
 
+#if !os(Linux)
+
 import Foundation
 #if canImport(FoundationNetworking)
 import FoundationNetworking
@@ -147,3 +149,5 @@ open class URLSessionWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSock
         self.delegate?.webSocket(didCloseWithCode: intCode, reason: r)
     }
 }
+
+#endif

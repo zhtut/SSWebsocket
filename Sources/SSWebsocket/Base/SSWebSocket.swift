@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import NIOPosix
 
 open class SSWebSocket: NSObject, SSWebSocketDelegate {
     
@@ -34,7 +35,11 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
             return
         }
         if let url = URL(string: urlStr) {
+#if os(Linux)
+            webSocket = NIOWebSocket(url)
+#else
             webSocket = URLSessionWebSocket(url)
+#endif
             webSocket?.delegate = self
             webSocket?.open()
             print("Websocket开始连接：\(url)")
