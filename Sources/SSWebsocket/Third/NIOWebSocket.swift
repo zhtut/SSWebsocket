@@ -20,7 +20,16 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
     
     open weak var delegate: SSWebSocketDelegate?
     
-    open var state: SSWebSocketState = .closed
+    public var state: SSWebSocketState {
+        if let ws = ws {
+            if ws.isClosed {
+                return .closed
+            } else {
+                return .connected
+            }
+        }
+        return .closed
+    }
     
     var elg = MultiThreadedEventLoopGroup(numberOfThreads: 2)
     var ws: WebSocket?
@@ -43,7 +52,6 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
     }
     
     open func open() {
-        state = .connecting
         var urlStr: String?
         if url != nil {
             urlStr = url!.absoluteString
@@ -74,7 +82,6 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
                     self?.delegate?.webSocketDidOpen()
                 case .failure(let error):
                     self?.delegate?.webSocket(didFailWithError: error)
-                    self?.state = .closed
             }
         })
     }
@@ -82,7 +89,6 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
     func setupWebSocket(ws: WebSocket) {
         self.ws = ws
         configWebSocket()
-        state = .connected
     }
     
     func configWebSocket() {
@@ -104,7 +110,7 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
         })
         ws?.onClose.whenComplete({ [weak self] result in
             DispatchQueue.main.async {
-                self?.state = .closed
+                self?.delegate?.webSocket(didCloseWithCode: -1, reason: "closed")
             }
         })
     }

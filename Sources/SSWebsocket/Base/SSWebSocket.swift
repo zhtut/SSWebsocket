@@ -23,6 +23,8 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
         return webSocket?.state == .connected
     }
     
+    var checkTimer: Timer?
+    
     open var waitingMessage = [[String: Any]]()
     
     public override init() {
@@ -58,6 +60,11 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
         }
     }
     
+    open func close() {
+        webSocket?.close()
+        checkTimer?.invalidate()
+    }
+    
     open func sendPing() {
         webSocket?.send("ping")
     }
@@ -88,10 +95,20 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
         open()
     }
     
+    private func checkConnectedState() {
+        if isConnected == false {
+            print("检查到连接状态中断了，重新连接")
+            open()
+        }
+    }
+    
     /// 代理
     open func webSocketDidOpen() {
         print("webSocketDidOpen")
         sendWaitingMessage()
+        checkTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true, block: { timer in
+            self.checkConnectedState()
+        })
     }
     open func webSocket(didReceiveMessageWith string: String) {
         webSocketDidReceive(string: string)

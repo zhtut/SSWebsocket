@@ -31,7 +31,7 @@ public protocol SSWebSocketClient: AnyObject {
     init(_ url: URL)
     
     var delegate: SSWebSocketDelegate? { get set }
-    var state: SSWebSocketState { get set }
+    var state: SSWebSocketState { get }
     
     func open()
     
