@@ -9,13 +9,13 @@ Pod::Spec.new do |s|
   websocket 工具库，可运行在linux上 
                    DESC
 
-  s.homepage     = "https://gitee.com/ztgtut/SSWebsocket.git"
+  s.homepage     = "https://github.com/zhtut/SSWebsocket.git"
 
   s.license        = { :type => 'MIT', :file => 'LICENSE' }
 
   s.author             = { "zhtg" => "zhtg@icloud.com" }
 
-  s.source       = { :git => "https://gitee.com/ztgtut/SSWebsocket.git", :tag => "#{s.version}" }
+  s.source       = { :git => "https://github.com/zhtut/SSWebsocket.git", :tag => "#{s.version}" }
 
   s.source_files  = "Sources/**/*.swift"
   s.module_name   = 'SSWebsocket'
