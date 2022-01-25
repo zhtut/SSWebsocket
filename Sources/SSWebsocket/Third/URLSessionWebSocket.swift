@@ -26,7 +26,11 @@ open class URLSessionWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSock
     required public convenience init(_ url: URL) {
         self.init()
         self.url = url
-        session = URLSession(configuration: URLSessionConfiguration.default, delegate: self, delegateQueue: nil)
+        let config = URLSessionConfiguration.default
+        if let systemProxy = CFNetworkCopySystemProxySettings()?.takeRetainedValue() as? [String: Any] {
+            config.connectionProxyDictionary = systemProxy
+        }
+        session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
     }
     
     open func open() {
@@ -38,7 +42,6 @@ open class URLSessionWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSock
         
         task = session?.webSocketTask(with: url)
         task?.maximumMessageSize = 4096
-        self.receive()
         task?.resume()
     }
     
@@ -105,18 +108,7 @@ open class URLSessionWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSock
                     break
                 case .failure(let error):
                     let err = error as NSError
-                    if err.code == 57 {
-                        print("读取数据失败，连接已中断：\(err)")
-                        self?.state = .closed
-                        DispatchQueue.main.async {
-                            self?.delegate?.webSocket(didCloseWithCode: err.code, reason: err.localizedDescription)
-                        }
-                        return
-                    }
                     print("读取数据失败，错误:\(err)")
-                    DispatchQueue.main.async {
-                        self?.delegate?.webSocket(didFailWithError: err)
-                    }
                     return
             }
             self?.receive()
@@ -131,12 +123,25 @@ open class URLSessionWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSock
         if error != nil {
             print("didCompleteWithError:\(error?.localizedDescription ?? "")")
         }
+        let err = error! as NSError
+        if err.code == 57 {
+            print("读取数据失败，连接已中断：\(err)")
+            self.state = .closed
+            DispatchQueue.main.async {
+                self.delegate?.webSocket(didCloseWithCode: err.code, reason: err.localizedDescription)
+            }
+            return
+        }
+        DispatchQueue.main.async {
+            self.delegate?.webSocket(didFailWithError: err)
+        }
     }
     
     public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
         state = .connected
         self.delegate?.webSocketDidOpen()
         sendPing()
+        self.receive()
     }
     
     public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
