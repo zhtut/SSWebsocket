@@ -123,8 +123,9 @@ open class URLSessionWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSock
         if error != nil {
             print("didCompleteWithError:\(error?.localizedDescription ?? "")")
         }
-        let err = error! as NSError
-        if err.code == 57 {
+        
+        if let err = error as NSError?,
+            err.code == 57 {
             print("读取数据失败，连接已中断：\(err)")
             self.state = .closed
             DispatchQueue.main.async {
@@ -132,8 +133,10 @@ open class URLSessionWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSock
             }
             return
         }
-        DispatchQueue.main.async {
-            self.delegate?.webSocket(didFailWithError: err)
+        if let error = error {
+            DispatchQueue.main.async {
+                self.delegate?.webSocket(didFailWithError: error)
+            }
         }
     }
     

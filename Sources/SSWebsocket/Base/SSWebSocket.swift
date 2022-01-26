@@ -27,9 +27,21 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
     
     open var waitingMessage = [[String: Any]]()
     
+    /// 发送String还是发送Data，true发送String, false发送Data
+    open var sendStr: Bool {
+        true
+    }
+    
+    /// init的时候是否自动连接
+    open var autoConnect: Bool {
+        true
+    }
+    
     public override init() {
         super.init()
-        open()
+        if autoConnect {
+            open()
+        }
     }
     
     open func open() {
@@ -54,8 +66,12 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
             return
         }
         if let data = try? JSONSerialization.data(withJSONObject: message, options: .prettyPrinted) {
-            if let str = String(data: data, encoding: .utf8) {
-                webSocket?.send(str)
+            if sendStr == false {
+                webSocket?.send(data)
+            } else {
+                if let str = String(data: data, encoding: .utf8) {
+                    webSocket?.send(str)
+                }
             }
         }
     }
