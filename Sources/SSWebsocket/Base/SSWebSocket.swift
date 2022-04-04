@@ -49,11 +49,11 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
             return
         }
         if let url = URL(string: urlStr) {
-#if os(Linux)
+//#if os(Linux)
             webSocket = NIOWebSocket(url)
-#else
-            webSocket = URLSessionWebSocket(url)
-#endif
+//#else
+//            webSocket = URLSessionWebSocket(url)
+//#endif
             webSocket?.delegate = self
             webSocket?.open()
             print("Websocket开始连接：\(url)")
@@ -94,23 +94,6 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
         waitingMessage.removeAll()
     }
     
-    open func webSocketDidReceive(message: [String: Any]) {
-        
-    }
-    
-    /// 子类继承的类
-    open func webSocketDidReceive(string: String) {
-        
-    }
-    
-    open func webSocketDidReceive(data: Data) {
-        
-    }
-    
-    open func webSocketDidClosedWith(code: Int, reason: String?) {
-        open()
-    }
-    
     private func checkConnectedState() {
         if isConnected == false {
             print("检查到连接状态中断了，重新连接")
@@ -122,25 +105,21 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
     open func webSocketDidOpen() {
         print("webSocketDidOpen")
         sendWaitingMessage()
-        checkTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true, block: { timer in
-            self.checkConnectedState()
+        checkTimer?.invalidate()
+        checkTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true, block: {[weak self] timer in
+            self?.checkConnectedState()
         })
     }
     open func webSocket(didReceiveMessageWith string: String) {
-        webSocketDidReceive(string: string)
+
     }
     open func webSocket(didReceiveMessageWith data: Data) {
-        webSocketDidReceive(data: data)
+
     }
     open func webSocket(didFailWithError error: Error) {
         print("didFailWithError：\(error)")
-        let desc = "\(error)"
-        if desc.contains("connectTimeout") {
-            self.open()
-        }
     }
     open func webSocket(didCloseWithCode code: Int, reason: String?) {
-        webSocketDidClosedWith(code: code, reason: reason)
         print("didCloseWithCode:\(code), reason:\(reason ?? "")")
     }
 }

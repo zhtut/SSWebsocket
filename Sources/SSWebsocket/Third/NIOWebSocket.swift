@@ -8,6 +8,7 @@
 import Foundation
 import WebSocketKit
 import NIO
+import NIOHTTP1
 import NIOWebSocket
 #if canImport(FoundationNetworking)
 import FoundationNetworking
@@ -33,7 +34,6 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
     
     var elg = MultiThreadedEventLoopGroup(numberOfThreads: 2)
     var ws: WebSocket?
-    var client: WebSocketClient?
     
     required public convenience init(_ url: URL) {
         self.init()
@@ -48,33 +48,26 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
     }
     
     private func setup() {
-        client = WebSocketClient(eventLoopGroupProvider: .shared(elg))
     }
     
     open func open() {
-        var urlStr: String?
-        if url != nil {
-            urlStr = url!.absoluteString
-        }
-           
-        if urlStr == nil && request != nil {
-            urlStr = request?.url?.absoluteString
-        }
-        guard let str = urlStr else {
-            print("初始化失败，url和reuest都为空，");
+        let urlStr = url?.absoluteString ?? request?.url?.absoluteString
+        
+        guard let urlStr = urlStr else {
+            print("url和request的url都为空，无法连接websocket")
             return
         }
-        guard let url = URL(string: str) else {
-            return
+        
+        var httpHeaders = HTTPHeaders()
+        if let requestHeaders = request?.allHTTPHeaderFields {
+            for (key, value) in requestHeaders {
+                httpHeaders.add(name: key, value: value)
+            }
         }
-        let port = url.port ?? 443
-        guard let scheme = url.scheme else {
-            return
-        }
-        guard let host = url.host else {
-            return
-        }
-        client!.connect(scheme: scheme, host: host, port: port, path: url.path) { ws in
+        
+        let config = WebSocketClient.Configuration()
+        
+        WebSocket.connect(to: urlStr, headers: httpHeaders, configuration: config, on: elg) { ws in
             self.setupWebSocket(ws: ws)
         }.whenComplete({ [weak self] result in
             switch result {
@@ -104,13 +97,22 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
             }
         })
         ws?.onPong({ [weak self] ws in
+            print("收到pong")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                self?.sendPing()
+            }
+        })
+        ws?.onPing({ [weak self] ws in
+            print("收到ping")
             DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
                 self?.sendPing()
             }
         })
         ws?.onClose.whenComplete({ [weak self] result in
             DispatchQueue.main.async {
-                self?.delegate?.webSocket(didCloseWithCode: -1, reason: "closed")
+                let reson = "closed"
+                let code = -1
+                self?.delegate?.webSocket(didCloseWithCode: code, reason: reson)
             }
         })
     }
