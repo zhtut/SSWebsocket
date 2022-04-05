@@ -104,9 +104,6 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
         })
         ws?.onPing({ [weak self] ws in
             print("收到ping")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                self?.sendPing()
-            }
         })
         ws?.onClose.whenComplete({ [weak self] result in
             DispatchQueue.main.async {

@@ -79,13 +79,8 @@ open class URLSessionWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSock
     }
     
     private func sendPing(_ completionHandler: ((Error?) -> Void)? = nil) {
-        task?.sendPing(pongReceiveHandler: { [weak self] error in
+        task?.sendPing(pongReceiveHandler: { error in
             completionHandler?(error)
-            if error == nil {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
-                    self?.sendPing()
-                }
-            }
         })
     }
     
@@ -143,7 +138,6 @@ open class URLSessionWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSock
     public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
         state = .connected
         self.delegate?.webSocketDidOpen()
-        sendPing()
         self.receive()
     }
     
