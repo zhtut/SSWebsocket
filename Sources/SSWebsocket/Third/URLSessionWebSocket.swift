@@ -78,7 +78,7 @@ open class URLSessionWebSocket: NSObject, URLSessionWebSocketDelegate, SSWebSock
         })
     }
     
-    private func sendPing(_ completionHandler: ((Error?) -> Void)? = nil) {
+    public func sendPing(_ completionHandler: ((Error?) -> Void)?) {
         task?.sendPing(pongReceiveHandler: { error in
             completionHandler?(error)
         })

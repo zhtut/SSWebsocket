@@ -23,7 +23,7 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
         return webSocket?.state == .connected
     }
     
-    var checkTimer: Timer?
+    private var checkTimer: Timer?
     
     open var waitingMessage = [[String: Any]]()
     
@@ -82,7 +82,9 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
     }
     
     open func sendPing() {
-        webSocket?.send("ping")
+        webSocket?.sendPing({ error in
+            
+        })
     }
     
     open func sendWaitingMessage() {
@@ -101,15 +103,24 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
         }
     }
     
-    /// 代理
+    // MARK: 代理
+    
     open func webSocketDidOpen() {
-        print("webSocketDidOpen")
         sendWaitingMessage()
         checkTimer?.invalidate()
         checkTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true, block: {[weak self] timer in
             self?.checkConnectedState()
         })
     }
+    
+    open func webSocketDidReceivePing() {
+        
+    }
+    
+    open func webSocketDidReceivePong() {
+        
+    }
+    
     open func webSocket(didReceiveMessageWith string: String) {
 
     }

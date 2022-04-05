@@ -20,6 +20,8 @@ public enum SSWebSocketState {
 
 public protocol SSWebSocketDelegate: AnyObject {
     func webSocketDidOpen()
+    func webSocketDidReceivePing()
+    func webSocketDidReceivePong()
     func webSocket(didReceiveMessageWith string: String)
     func webSocket(didReceiveMessageWith data: Data)
     func webSocket(didFailWithError error: Error)
@@ -42,4 +44,6 @@ public protocol SSWebSocketClient: AnyObject {
     func send(_ string: String, completionHandler: ((Error?) -> Void)?)
     func send(_ data: Data)
     func send(_ data: Data, completionHandler: ((Error?) -> Void)?)
+    
+    func sendPing(_ completionHandler: ((Error?) -> Void)?)
 }

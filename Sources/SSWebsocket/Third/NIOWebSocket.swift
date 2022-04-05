@@ -97,13 +97,14 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
             }
         })
         ws?.onPong({ [weak self] ws in
-            print("收到pong")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                self?.sendPing()
+            DispatchQueue.main.async {
+                self?.delegate?.webSocketDidReceivePong()
             }
         })
         ws?.onPing({ [weak self] ws in
-            print("收到ping")
+            DispatchQueue.main.async {
+                self?.delegate?.webSocketDidReceivePing()
+            }
         })
         ws?.onClose.whenComplete({ [weak self] result in
             DispatchQueue.main.async {
@@ -157,7 +158,7 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
         }
     }
     
-    private func sendPing(_ completionHandler: ((Error?) -> Void)? = nil) {
+    open func sendPing(_ completionHandler: ((Error?) -> Void)?) {
         let promise = self.elg.next().makePromise(of: Void.self)
         ws?.sendPing(promise: promise)
         promise.futureResult.whenComplete { result in
