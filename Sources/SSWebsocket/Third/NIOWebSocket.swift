@@ -111,9 +111,10 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
         })
         ws?.onClose.whenComplete({ [weak self] result in
             DispatchQueue.main.async {
+                var reson = ""
+                var code = -1
                 if let closeCode = self?.ws?.closeCode {
-                    let reson = "\(closeCode)"
-                    var code = 0
+                    reson = "\(closeCode)"
                     switch closeCode {
                         case .normalClosure:
                             code = 1000
@@ -136,8 +137,8 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
                         default:
                             code = -1
                     }
-                    self?.delegate?.webSocket(didCloseWithCode: code, reason: reson)
                 }
+                self?.delegate?.webSocket(didCloseWithCode: code, reason: reson)
             }
         })
     }
