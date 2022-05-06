@@ -70,11 +70,13 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
         WebSocket.connect(to: urlStr, headers: httpHeaders, configuration: config, on: elg) { ws in
             self.setupWebSocket(ws: ws)
         }.whenComplete({ [weak self] result in
-            switch result {
-                case .success(_):
-                    self?.delegate?.webSocketDidOpen()
-                case .failure(let error):
-                    self?.delegate?.webSocket(didFailWithError: error)
+            DispatchQueue.main.async {
+                switch result {
+                    case .success(_):
+                        self?.delegate?.webSocketDidOpen()
+                    case .failure(let error):
+                        self?.delegate?.webSocket(didFailWithError: error)
+                }
             }
         })
     }
@@ -85,6 +87,7 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
     }
     
     func configWebSocket() {
+        ws?.pingInterval = TimeAmount.minutes(8)
         ws?.onText({ [weak self] ws, string in
             DispatchQueue.main.async {
                 self?.delegate?.webSocket(didReceiveMessageWith: string)
@@ -108,9 +111,33 @@ open class NIOWebSocket: NSObject, SSWebSocketClient {
         })
         ws?.onClose.whenComplete({ [weak self] result in
             DispatchQueue.main.async {
-                let reson = "closed"
-                let code = -1
-                self?.delegate?.webSocket(didCloseWithCode: code, reason: reson)
+                if let closeCode = self?.ws?.closeCode {
+                    let reson = "\(closeCode)"
+                    var code = 0
+                    switch closeCode {
+                        case .normalClosure:
+                            code = 1000
+                        case .goingAway:
+                            code = 1001
+                        case .protocolError:
+                            code = 1002
+                        case .unacceptableData:
+                            code = 1003
+                        case .dataInconsistentWithMessage:
+                            code = 1007
+                        case .policyViolation:
+                            code = 1008
+                        case .messageTooLarge:
+                            code = 1009
+                        case .missingExtension:
+                            code = 1010
+                        case .unexpectedServerError:
+                            code = 1011
+                        default:
+                            code = -1
+                    }
+                    self?.delegate?.webSocket(didCloseWithCode: code, reason: reson)
+                }
             }
         })
     }

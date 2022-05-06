@@ -23,8 +23,6 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
         return webSocket?.state == .connected
     }
     
-    private var checkTimer: Timer?
-    
     open var waitingMessage = [[String: Any]]()
     
     /// 发送String还是发送Data，true发送String, false发送Data
@@ -45,9 +43,6 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
     }
     
     open func open() {
-        if isConnected {
-            return
-        }
         if let url = URL(string: urlStr) {
 //#if os(Linux)
             webSocket = NIOWebSocket(url)
@@ -78,7 +73,6 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
     
     open func close() {
         webSocket?.close()
-        checkTimer?.invalidate()
     }
     
     open func sendPing() {
@@ -88,18 +82,12 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
     }
     
     open func sendWaitingMessage() {
-        if waitingMessage.count > 0 {
-            for mess in waitingMessage {
+        let messages = waitingMessage
+        waitingMessage.removeAll()
+        if messages.count > 0 {
+            for mess in messages {
                 sendMessage(message: mess)
             }
-        }
-        waitingMessage.removeAll()
-    }
-    
-    private func checkConnectedState() {
-        if isConnected == false {
-            print("检查到连接状态中断了，重新连接")
-            open()
         }
     }
     
@@ -107,10 +95,6 @@ open class SSWebSocket: NSObject, SSWebSocketDelegate {
     
     open func webSocketDidOpen() {
         sendWaitingMessage()
-        checkTimer?.invalidate()
-        checkTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true, block: {[weak self] timer in
-            self?.checkConnectedState()
-        })
     }
     
     open func webSocketDidReceivePing() {
