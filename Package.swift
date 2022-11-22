@@ -10,7 +10,7 @@ let package = Package(name: "SSWebsocket",
                         .library(name: "SSWebsocket", targets: ["SSWebsocket"]),
                       ],
                       dependencies: [
-                        .package(url: "https://github.com/vapor/websocket-kit.git", from: "2.3.1"),
+                        .package(url: "https://github.com/vapor/websocket-kit.git", from: "2.6.1"),
                       ],
                       targets: [
                         .target(name: "SSWebsocket", dependencies: [
