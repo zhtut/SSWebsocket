@@ -10,9 +10,10 @@ import WebSocketKit
 import NIO
 import NIOHTTP1
 import NIOWebSocket
-#if canImport(FoundationNetworking)
-import FoundationNetworking
-#endif
+
+public struct SSWebSocketError: Error {
+    var msg: String
+}
 
 public enum SSWebSocketState {
     case connected
@@ -50,11 +51,9 @@ open class SSWebSocket {
     }
     
     open func open() async throws {
-        let urlStr = request?.url?.absoluteString
         
-        guard let urlStr = urlStr else {
-            print("url和request的url都为空，无法连接websocket")
-            return
+        guard let urlStr = request?.url?.absoluteString else {
+            throw SSWebSocketError(msg: "request url not found")
         }
         
         var httpHeaders = HTTPHeaders()
@@ -95,26 +94,26 @@ open class SSWebSocket {
             if let closeCode = self?.ws?.closeCode {
                 reson = "\(closeCode)"
                 switch closeCode {
-                case .normalClosure:
-                    code = 1000
-                case .goingAway:
-                    code = 1001
-                case .protocolError:
-                    code = 1002
-                case .unacceptableData:
-                    code = 1003
-                case .dataInconsistentWithMessage:
-                    code = 1007
-                case .policyViolation:
-                    code = 1008
-                case .messageTooLarge:
-                    code = 1009
-                case .missingExtension:
-                    code = 1010
-                case .unexpectedServerError:
-                    code = 1011
-                default:
-                    code = -1
+                    case .normalClosure:
+                        code = 1000
+                    case .goingAway:
+                        code = 1001
+                    case .protocolError:
+                        code = 1002
+                    case .unacceptableData:
+                        code = 1003
+                    case .dataInconsistentWithMessage:
+                        code = 1007
+                    case .policyViolation:
+                        code = 1008
+                    case .messageTooLarge:
+                        code = 1009
+                    case .missingExtension:
+                        code = 1010
+                    case .unexpectedServerError:
+                        code = 1011
+                    default:
+                        code = -1
                 }
             }
             self?.delegate?.webSocket(didCloseWithCode: code, reason: reson)
