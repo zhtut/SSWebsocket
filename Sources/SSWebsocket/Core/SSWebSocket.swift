@@ -34,11 +34,7 @@ open class SSWebSocket: NSObject, URLSessionWebSocketDelegate {
     open weak var delegate: SSWebSocketDelegate?
     
     private lazy var session: URLSession = {
-        let config = URLSessionConfiguration.default
-        if let systemProxy = CFNetworkCopySystemProxySettings()?.takeRetainedValue() as? [String: Any] {
-            config.connectionProxyDictionary = systemProxy
-        }
-        return URLSession(configuration: config, delegate: self, delegateQueue: nil)
+        return URLSession.shared
     }()
     
     private var task: URLSessionWebSocketTask?
