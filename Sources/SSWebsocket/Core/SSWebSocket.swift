@@ -1,139 +1,155 @@
 //
 //  File.swift
-//
+//  
 //
 //  Created by shutut on 2021/9/7.
 //
 
 import Foundation
-import WebSocketKit
-import NIO
-import NIOHTTP1
-import NIOWebSocket
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 public struct SSWebSocketError: Error {
     var msg: String
 }
 
 public enum SSWebSocketState {
+    case connecting
     case connected
+    case closing
     case closed
 }
 
-open class SSWebSocket {
+@available(iOS 13.0, *)
+@available(macOS 10.15, *)
+open class SSWebSocket: NSObject, URLSessionWebSocketDelegate {
     
-    open var request: URLRequest?
+    open var url: URL? {
+        return request?.url
+    }
+    
+    open private(set) var request: URLRequest?
     
     open weak var delegate: SSWebSocketDelegate?
     
-    open var state: SSWebSocketState {
-        if let ws = ws {
-            if ws.isClosed {
-                return .closed
-            } else {
-                return .connected
-            }
+    private lazy var session: URLSession = {
+        let config = URLSessionConfiguration.default
+        if let systemProxy = CFNetworkCopySystemProxySettings()?.takeRetainedValue() as? [String: Any] {
+            config.connectionProxyDictionary = systemProxy
         }
-        return .closed
-    }
+        return URLSession(configuration: config, delegate: self, delegateQueue: nil)
+    }()
     
-    var elg = MultiThreadedEventLoopGroup(numberOfThreads: 2)
-    open var ws: WebSocket?
+    private var task: URLSessionWebSocketTask?
+    
+    open var state = SSWebSocketState.closed
+    
+    public init(url: URL) {
+        self.request = URLRequest(url: url)
+    }
     
     public init(request: URLRequest) {
         self.request = request
     }
     
     open func open() {
+        guard let request = request else {
+            fatalError("初始化失败，url都为空");
+        }
+        
+        state = .connecting
+        
+        task = session.webSocketTask(with: request)
+        task?.maximumMessageSize = 4096
+        task?.resume()
+    }
+    
+    open func close(_ closeCode: Int? = nil, reason: Data? = nil) {
+        state = .closing
+        var code = URLSessionWebSocketTask.CloseCode.normalClosure
+        if closeCode != nil {
+            code = URLSessionWebSocketTask.CloseCode(rawValue: closeCode!)!
+        }
+        task?.cancel(with: code, reason: reason)
+    }
+    
+    open func send(string: String) async throws {
+        try await task?.send(.string(string))
+    }
+    
+    open func send(data: Data) async throws {
+        try await task?.send(.data(data))
+    }
+    
+    open func sendPing(_ completionHandler: @escaping ((Error?) -> Void)) {
+        task?.sendPing(pongReceiveHandler: completionHandler)
+    }
+    
+    private func receive() async throws {
+        guard let task = task else {
+            return
+        }
+        do {
+            let message = try await task.receive()
+            switch message {
+                case .string(let string):
+                    delegate?.webSocket(didReceiveMessageWith: string)
+                case .data(let data):
+                    delegate?.webSocket(didReceiveMessageWith: data)
+                @unknown default:
+                    break
+            }
+        } catch {
+            print("接收消息错误：\(error)")
+        }
+        try await receive()
+    }
+    
+    public func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
+        print("didBecomeInvalidWithError:\(error?.localizedDescription ?? "")")
+        didClose(code: -1, reason: "URLSession Invalid: \(String(describing: error))")
+    }
+    
+    public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if error != nil {
+            print("didCompleteWithError:\(error?.localizedDescription ?? "")")
+        }
+        
+        if let err = error as NSError?,
+            err.code == 57 {
+            print("读取数据失败，连接已中断：\(err)")
+            didClose(code: err.code, reason: err.localizedDescription)
+            return
+        }
+        if let error = error {
+            delegate?.webSocket(didFailWithError: error)
+        }
+    }
+    
+    public func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
+        state = .connected
+        delegate?.webSocketDidOpen()
         Task {
-            try await open()
+            try await self.receive()
         }
     }
     
-    open func open() async throws {
-        
-        guard let urlStr = request?.url?.absoluteString else {
-            throw SSWebSocketError(msg: "request url not found")
+    public func urlSession(_ session: URLSession,
+                           webSocketTask: URLSessionWebSocketTask,
+                           didCloseWith closeCode: URLSessionWebSocketTask.CloseCode,
+                           reason: Data?) {
+        var r = ""
+        if let d = reason {
+            r = String(data: d, encoding: .utf8) ?? ""
         }
-        
-        var httpHeaders = HTTPHeaders()
-        if let requestHeaders = request?.allHTTPHeaderFields {
-            for (key, value) in requestHeaders {
-                httpHeaders.add(name: key, value: value)
-            }
-        }
-        
-        let config = WebSocketClient.Configuration()
-        
-        try await WebSocket.connect(to: urlStr, headers: httpHeaders, configuration: config, on: elg, onUpgrade: setupWebSocket)
+        let intCode = closeCode.rawValue
+        didClose(code: intCode, reason: r)
     }
     
-    func setupWebSocket(ws: WebSocket) async {
-        self.ws = ws
-        configWebSocket()
-    }
-    
-    func configWebSocket() {
-        ws?.pingInterval = TimeAmount.minutes(8)
-        ws?.onText({ [weak self] ws, string in
-            self?.delegate?.webSocket(didReceiveMessageWith: string)
-        })
-        ws?.onBinary({ [weak self] ws, buffer in
-            let data = Data(buffer: buffer)
-            self?.delegate?.webSocket(didReceiveMessageWith: data)
-        })
-        ws?.onPong({ [weak self] ws in
-            self?.delegate?.webSocketDidReceivePong()
-        })
-        ws?.onPing({ [weak self] ws in
-            self?.delegate?.webSocketDidReceivePing()
-        })
-        ws?.onClose.whenComplete({ [weak self] result in
-            var reson = ""
-            var code = -1
-            if let closeCode = self?.ws?.closeCode {
-                reson = "\(closeCode)"
-                switch closeCode {
-                    case .normalClosure:
-                        code = 1000
-                    case .goingAway:
-                        code = 1001
-                    case .protocolError:
-                        code = 1002
-                    case .unacceptableData:
-                        code = 1003
-                    case .dataInconsistentWithMessage:
-                        code = 1007
-                    case .policyViolation:
-                        code = 1008
-                    case .messageTooLarge:
-                        code = 1009
-                    case .missingExtension:
-                        code = 1010
-                    case .unexpectedServerError:
-                        code = 1011
-                    default:
-                        code = -1
-                }
-            }
-            self?.delegate?.webSocket(didCloseWithCode: code, reason: reson)
-        })
-    }
-    
-    public func close(_ closeCode: WebSocketErrorCode = .normalClosure) async throws {
-        try await ws?.close(code: closeCode)
-    }
-    
-    open func send(_ string: String) async throws {
-        try await ws?.send(string)
-    }
-    
-    open func send(_ data: Data) async throws {
-        let bytes = [UInt8](data)
-        try await ws?.send(bytes)
-    }
-    
-    open func sendPing() async throws {
-        try await ws?.sendPing()
+    func didClose(code: Int, reason: String?) {
+        state = .closed
+        delegate?.webSocket(didCloseWithCode: code, reason: reason)
+        task = nil
     }
 }
