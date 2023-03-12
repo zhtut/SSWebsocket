@@ -29,12 +29,17 @@ open class SSWebSocket: NSObject, URLSessionWebSocketDelegate {
         return request?.url
     }
     
+    open lazy var delegateQueue: OperationQueue = {
+        OperationQueue()
+    }()
+    
     open private(set) var request: URLRequest?
     
     open weak var delegate: SSWebSocketDelegate?
     
     private lazy var session: URLSession = {
-        return URLSession.shared
+        let session = URLSession(configuration: .default, delegate: self, delegateQueue: delegateQueue)
+        return session
     }()
     
     private var task: URLSessionWebSocketTask?
