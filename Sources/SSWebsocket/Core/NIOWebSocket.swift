@@ -11,6 +11,9 @@ import Foundation
 import WebSocketKit
 import NIO
 import NIOWebSocket
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 @available(iOS 15.0, *)
 @available(macOS 12.0, *)
