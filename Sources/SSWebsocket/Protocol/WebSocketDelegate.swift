@@ -7,7 +7,7 @@
 
 import Foundation
 
-public protocol SSWebSocketDelegate: AnyObject {
+public protocol WebSocketDelegate: AnyObject {
     func webSocketDidOpen()
     func webSocketDidReceivePing()
     func webSocketDidReceivePong()
@@ -17,7 +17,7 @@ public protocol SSWebSocketDelegate: AnyObject {
     func webSocket(didCloseWithCode code: Int, reason: String?)
 }
 
-extension SSWebSocketDelegate {
+extension WebSocketDelegate {
     func webSocketDidOpen() {}
     func webSocketDidReceivePing() {}
     func webSocketDidReceivePong() {}

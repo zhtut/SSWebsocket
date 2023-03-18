@@ -10,17 +10,6 @@ import Foundation
 import FoundationNetworking
 #endif
 
-public struct SSWebSocketError: Error {
-    var msg: String
-}
-
-public enum SSWebSocketState {
-    case connecting
-    case connected
-    case closing
-    case closed
-}
-
 @available(iOS 13.0, *)
 @available(macOS 10.15, *)
 open class SSWebSocket: NSObject, URLSessionWebSocketDelegate {
@@ -35,7 +24,7 @@ open class SSWebSocket: NSObject, URLSessionWebSocketDelegate {
     
     open private(set) var request: URLRequest?
     
-    open weak var delegate: SSWebSocketDelegate?
+    open weak var delegate: WebSocketDelegate?
     
     private lazy var session: URLSession = {
         let session = URLSession(configuration: .default, delegate: self, delegateQueue: delegateQueue)
@@ -44,7 +33,7 @@ open class SSWebSocket: NSObject, URLSessionWebSocketDelegate {
     
     private var task: URLSessionWebSocketTask?
     
-    open var state = SSWebSocketState.closed
+    open var state = WebSocketState.closed
     
     public init(url: URL) {
         self.request = URLRequest(url: url)
