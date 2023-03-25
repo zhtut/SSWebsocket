@@ -144,6 +144,10 @@ open class NIOWebSocket: NSObject {
     open func sendPing() async throws {
         try await ws?.sendPing()
     }
+    
+    open func sendPong() async throws {
+        try await ws?.send(raw: Data(), opcode: .pong, fin: true)
+    }
 }
 
 #endif
