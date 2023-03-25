@@ -11,12 +11,14 @@ import Foundation
 import WebSocketKit
 import NIO
 import NIOWebSocket
+import NIOPosix
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
 
 @available(iOS 15.0, *)
 @available(macOS 12.0, *)
+/// 使用Swift NIO实现的websocket
 open class NIOWebSocket {
     
     open var url: URL? {
@@ -38,7 +40,10 @@ open class NIOWebSocket {
         return .closed
     }
     
+    /// eventLoop组
     var elg = MultiThreadedEventLoopGroup(numberOfThreads: 2)
+    
+    /// websocket对象
     open var ws: WebSocket?
     
     /// 自动回复ping，默认为true
@@ -52,12 +57,14 @@ open class NIOWebSocket {
         self.request = request
     }
     
+    /// 开始连接
     open func open() {
         Task {
             try await open()
         }
     }
     
+    /// 开始连接
     open func open() async throws {
         let urlStr = request.url?.absoluteString
         
@@ -78,12 +85,15 @@ open class NIOWebSocket {
         try await WebSocket.connect(to: urlStr, headers: httpHeaders, configuration: config, on: elg, onUpgrade: setupWebSocket)
     }
     
+    /// 连接上了
+    /// - Parameter ws: websocket对象
     func setupWebSocket(ws: WebSocket) async {
         self.ws = ws
         configWebSocket()
         delegate?.webSocketDidOpen()
     }
     
+    /// 详细配置回调的方法
     func configWebSocket() {
         ws?.pingInterval = TimeAmount.minutes(8)
         ws?.onText({ [weak self] ws, string in
