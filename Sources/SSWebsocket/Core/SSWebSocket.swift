@@ -15,14 +15,14 @@ import FoundationNetworking
 open class SSWebSocket: NSObject, URLSessionWebSocketDelegate {
     
     open var url: URL? {
-        return request?.url
+        return request.url
     }
     
     open lazy var delegateQueue: OperationQueue = {
         OperationQueue()
     }()
     
-    open private(set) var request: URLRequest?
+    open private(set) var request: URLRequest
     
     open weak var delegate: WebSocketDelegate?
     
@@ -37,17 +37,15 @@ open class SSWebSocket: NSObject, URLSessionWebSocketDelegate {
     
     public init(url: URL) {
         self.request = URLRequest(url: url)
+        super.init()
     }
     
     public init(request: URLRequest) {
         self.request = request
+        super.init()
     }
     
     open func open() {
-        guard let request = request else {
-            fatalError("初始化失败，url都为空");
-        }
-        
         state = .connecting
         
         task = session.webSocketTask(with: request)

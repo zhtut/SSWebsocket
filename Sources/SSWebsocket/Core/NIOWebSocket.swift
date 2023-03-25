@@ -17,7 +17,7 @@ import FoundationNetworking
 
 @available(iOS 15.0, *)
 @available(macOS 12.0, *)
-open class NIOWebSocket: NSObject {
+open class NIOWebSocket {
     
     open var url: URL? {
         return request.url
@@ -40,6 +40,9 @@ open class NIOWebSocket: NSObject {
     
     var elg = MultiThreadedEventLoopGroup(numberOfThreads: 2)
     open var ws: WebSocket?
+    
+    /// 自动回复ping，默认为true
+    open var autoReplyPing = true
     
     public init(url: URL) {
         self.request = URLRequest(url: url)
@@ -94,7 +97,13 @@ open class NIOWebSocket: NSObject {
             self?.delegate?.webSocketDidReceivePong()
         })
         ws?.onPing({ [weak self] ws in
-            self?.delegate?.webSocketDidReceivePing()
+            guard let self = self else { return }
+            self.delegate?.webSocketDidReceivePing()
+            if self.autoReplyPing {
+                Task {
+                    try await self.sendPong()
+                }
+            }
         })
         ws?.onClose.whenComplete({ [weak self] result in
             var reson = ""
